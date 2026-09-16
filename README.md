@@ -1,5 +1,7 @@
 # ⚡ CyberpunkTerminalWidget
 
+<img width="778" height="503" alt="Screenshot 2026-09-15 203214" src="https://github.com/user-attachments/assets/b07c4502-62bd-42ad-ab5d-ce31f338228e" />
+
 [![.NET](https://img.shields.io/badge/.NET-8.0--windows-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
 [![WPF](https://img.shields.io/badge/UI-WPF-0078D4?logo=windows&logoColor=white)](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/)
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011-00ADEF?logo=windows11&logoColor=white)](https://www.microsoft.com/windows)
