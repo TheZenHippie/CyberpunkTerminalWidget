@@ -1,0 +1,597 @@
+<Window x:Class="CyberpunkTerminalWidget.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Cyberpunk Terminal Widget"
+        Icon="icon.png"
+        Height="460" Width="720"
+        MinHeight="180" MinWidth="280"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ResizeMode="CanResizeWithGrip"
+        MouseLeftButtonDown="Window_MouseLeftButtonDown"
+        SizeChanged="Window_SizeChanged"
+        ContextMenuOpening="Window_ContextMenuOpening">
+
+    <Window.ContextMenu>
+        <ContextMenu x:Name="MainContextMenu"
+                     PreviewMouseMove="MainContextMenu_PreviewMouseMove"
+                     PreviewMouseLeftButtonDown="MainContextMenu_PreviewMouseLeftButtonDown"
+                     Closed="MainContextMenu_Closed">
+
+            <!-- Shell Switching -->
+            <MenuItem Header="Shell">
+                <MenuItem x:Name="ShellPowerShellMenuItem" Header="Windows PowerShell" IsCheckable="True" IsChecked="True" Click="ShellPowerShell_Click"/>
+                <MenuItem x:Name="ShellCmdMenuItem" Header="Command Prompt (CMD)" IsCheckable="True" IsChecked="False" Click="ShellCmd_Click"/>
+            </MenuItem>
+            <MenuItem Header="Clear Terminal" Click="ClearTerminal_Click"/>
+            <MenuItem Header="Restart Shell / Send Break" Click="RestartShell_Click"/>
+            <Separator/>
+
+            <!-- Font Family -->
+            <MenuItem x:Name="FontFamilyMenuItem" Header="Font Family">
+                <MenuItem Header="Choose Font (All System Fonts)..." Click="ChooseAllFonts_Click" FontWeight="Bold"/>
+                <Separator/>
+                <!-- Monospace favorites dynamically populated and checked in code-behind -->
+            </MenuItem>
+
+            <!-- Font Size -->
+            <MenuItem x:Name="FontSizeMenuItem" Header="Font Size">
+                <MenuItem Header="10 pt" Click="FontSize_Click" Tag="10"/>
+                <MenuItem Header="11 pt" Click="FontSize_Click" Tag="11"/>
+                <MenuItem Header="12 pt" Click="FontSize_Click" Tag="12" IsChecked="True"/>
+                <MenuItem Header="14 pt" Click="FontSize_Click" Tag="14"/>
+                <MenuItem Header="16 pt" Click="FontSize_Click" Tag="16"/>
+                <MenuItem Header="18 pt" Click="FontSize_Click" Tag="18"/>
+                <MenuItem Header="20 pt" Click="FontSize_Click" Tag="20"/>
+                <MenuItem Header="24 pt" Click="FontSize_Click" Tag="24"/>
+            </MenuItem>
+
+            <!-- Font Color with Visual Color Swatches -->
+            <MenuItem x:Name="FontColorMenuItem" Header="Font Color">
+                <MenuItem Header="Matrix Green" Click="FontColor_Click" Tag="#00FF66" IsChecked="True">
+                    <MenuItem.Icon>
+                        <Border Width="16" Height="16" CornerRadius="3" Background="#00FF66" BorderBrush="#80FFFFFF" BorderThickness="1"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Neon Cyan" Click="FontColor_Click" Tag="#00F0FF">
+                    <MenuItem.Icon>
+                        <Border Width="16" Height="16" CornerRadius="3" Background="#00F0FF" BorderBrush="#80FFFFFF" BorderThickness="1"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Synthwave Magenta" Click="FontColor_Click" Tag="#FF007F">
+                    <MenuItem.Icon>
+                        <Border Width="16" Height="16" CornerRadius="3" Background="#FF007F" BorderBrush="#80FFFFFF" BorderThickness="1"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Solar Amber" Click="FontColor_Click" Tag="#FFB000">
+                    <MenuItem.Icon>
+                        <Border Width="16" Height="16" CornerRadius="3" Background="#FFB000" BorderBrush="#80FFFFFF" BorderThickness="1"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Phosphor White" Click="FontColor_Click" Tag="#F0F0F0">
+                    <MenuItem.Icon>
+                        <Border Width="16" Height="16" CornerRadius="3" Background="#F0F0F0" BorderBrush="#80FFFFFF" BorderThickness="1"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Glitch Red" Click="FontColor_Click" Tag="#FF2244">
+                    <MenuItem.Icon>
+                        <Border Width="16" Height="16" CornerRadius="3" Background="#FF2244" BorderBrush="#80FFFFFF" BorderThickness="1"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Night City Violet" Click="FontColor_Click" Tag="#A040FF">
+                    <MenuItem.Icon>
+                        <Border Width="16" Height="16" CornerRadius="3" Background="#A040FF" BorderBrush="#80FFFFFF" BorderThickness="1"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <Separator/>
+                <MenuItem Header="Custom Color..." Click="CustomFontColor_Click">
+                    <MenuItem.Icon>
+                        <Border Width="16" Height="16" CornerRadius="3" BorderBrush="#80FFFFFF" BorderThickness="1">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                    <GradientStop Color="#00FF66" Offset="0.0"/>
+                                    <GradientStop Color="#00F0FF" Offset="0.5"/>
+                                    <GradientStop Color="#FF007F" Offset="1.0"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                        </Border>
+                    </MenuItem.Icon>
+                </MenuItem>
+            </MenuItem>
+            <Separator/>
+
+            <!-- Window Opacity Slider (0% - 100%) -->
+            <MenuItem StaysOpenOnClick="True">
+                <MenuItem.Header>
+                    <StackPanel Width="210" Margin="0,2">
+                        <DockPanel LastChildFill="False">
+                            <TextBlock Text="Window Opacity" FontWeight="SemiBold"/>
+                            <TextBlock x:Name="WindowOpacityValueText" Text="75%" DockPanel.Dock="Right" Foreground="#666666"/>
+                        </DockPanel>
+                        <Slider x:Name="WindowOpacitySlider"
+                                Minimum="0.0" Maximum="1.0" Value="0.75"
+                                SmallChange="0.05" LargeChange="0.1"
+                                Margin="0,6,0,2"
+                                PreviewMouseWheel="Slider_PreviewMouseWheel"
+                                ValueChanged="WindowOpacitySlider_ValueChanged"/>
+                    </StackPanel>
+                </MenuItem.Header>
+            </MenuItem>
+
+            <!-- Font Opacity Slider (10% - 100%) -->
+            <MenuItem StaysOpenOnClick="True">
+                <MenuItem.Header>
+                    <StackPanel Width="210" Margin="0,2">
+                        <DockPanel LastChildFill="False">
+                            <TextBlock Text="Font Opacity" FontWeight="SemiBold"/>
+                            <TextBlock x:Name="FontOpacityValueText" Text="100%" DockPanel.Dock="Right" Foreground="#666666"/>
+                        </DockPanel>
+                        <Slider x:Name="FontOpacitySlider"
+                                Minimum="0.1" Maximum="1.0" Value="1.0"
+                                SmallChange="0.05" LargeChange="0.1"
+                                Margin="0,6,0,2"
+                                PreviewMouseWheel="Slider_PreviewMouseWheel"
+                                ValueChanged="FontOpacitySlider_ValueChanged"/>
+                    </StackPanel>
+                </MenuItem.Header>
+            </MenuItem>
+            <Separator/>
+
+            <!-- Background Image Selection -->
+            <MenuItem Header="Select Background Image..." Click="SelectBackgroundImage_Click"/>
+            <MenuItem x:Name="ClearBackgroundImageMenuItem" Header="Clear Background Image" Click="ClearBackgroundImage_Click" IsEnabled="False"/>
+            <Separator/>
+
+            <!-- Visual Effects Suite -->
+            <MenuItem x:Name="EffectsMenuItem"
+                      Header="Effects"
+                      StaysOpenOnClick="True"
+                      MouseEnter="EffectsMenuItem_MouseEnter"
+                      MouseLeave="EffectsMenuItem_MouseLeave"
+                      SubmenuOpened="EffectsMenuItem_SubmenuOpened"
+                      SubmenuClosed="EffectsMenuItem_SubmenuClosed">
+
+                <!-- Cyberpunk Rainbow Border -->
+                <MenuItem x:Name="RainbowBorderMenuItem"
+                          Header="Cyberpunk Rainbow Border"
+                          IsCheckable="True"
+                          IsChecked="False"
+                          StaysOpenOnClick="True"
+                          Click="RainbowBorder_Click"/>
+                <MenuItem StaysOpenOnClick="True">
+                    <MenuItem.Header>
+                        <StackPanel Width="200" Margin="0,2">
+                            <DockPanel LastChildFill="False">
+                                <TextBlock Text="Border Width" FontWeight="SemiBold"/>
+                                <TextBlock x:Name="BorderWidthValueText" Text="4px" DockPanel.Dock="Right" Foreground="#666666"/>
+                            </DockPanel>
+                            <Slider x:Name="BorderWidthSlider"
+                                    Minimum="1" Maximum="20" Value="4"
+                                    SmallChange="1" LargeChange="2"
+                                    TickFrequency="1" IsSnapToTickEnabled="True"
+                                    Margin="0,6,0,2"
+                                    PreviewMouseWheel="Slider_PreviewMouseWheel"
+                                    ValueChanged="BorderWidthSlider_ValueChanged"/>
+                        </StackPanel>
+                    </MenuItem.Header>
+                </MenuItem>
+                <Separator/>
+
+                <!-- Vintage CRT Scanlines -->
+                <MenuItem x:Name="CrtScanlinesMenuItem"
+                          Header="Vintage CRT Scanlines"
+                          IsCheckable="True"
+                          IsChecked="False"
+                          StaysOpenOnClick="True"
+                          Click="CrtScanlines_Click"/>
+                <MenuItem StaysOpenOnClick="True">
+                    <MenuItem.Header>
+                        <StackPanel Width="200" Margin="0,2">
+                            <DockPanel LastChildFill="False">
+                                <TextBlock Text="Scanline Thickness" FontWeight="SemiBold"/>
+                                <TextBlock x:Name="ScanlineThicknessValueText" Text="3px" DockPanel.Dock="Right" Foreground="#666666"/>
+                            </DockPanel>
+                            <Slider x:Name="ScanlineThicknessSlider"
+                                    Minimum="1" Maximum="20" Value="3"
+                                    SmallChange="1" LargeChange="2"
+                                    TickFrequency="1" IsSnapToTickEnabled="True"
+                                    Margin="0,6,0,2"
+                                    PreviewMouseWheel="Slider_PreviewMouseWheel"
+                                    ValueChanged="ScanlineThicknessSlider_ValueChanged"/>
+                        </StackPanel>
+                    </MenuItem.Header>
+                </MenuItem>
+                <Separator/>
+
+                <!-- CRT Glitch -->
+                <MenuItem x:Name="CrtGlitchMenuItem"
+                          Header="CRT Glitch"
+                          IsCheckable="True"
+                          IsChecked="False"
+                          StaysOpenOnClick="True"
+                          Click="CrtGlitch_Click"/>
+                <MenuItem StaysOpenOnClick="True">
+                    <MenuItem.Header>
+                        <StackPanel Width="200" Margin="0,2">
+                            <DockPanel LastChildFill="False">
+                                <TextBlock Text="Glitch Chance" FontWeight="SemiBold"/>
+                                <TextBlock x:Name="GlitchChanceValueText" Text="15%" DockPanel.Dock="Right" Foreground="#666666"/>
+                            </DockPanel>
+                            <Slider x:Name="GlitchChanceSlider"
+                                    Minimum="0" Maximum="100" Value="15"
+                                    SmallChange="1" LargeChange="5"
+                                    TickFrequency="1" IsSnapToTickEnabled="True"
+                                    Margin="0,6,0,2"
+                                    PreviewMouseWheel="Slider_PreviewMouseWheel"
+                                    ValueChanged="GlitchChanceSlider_ValueChanged"/>
+                        </StackPanel>
+                    </MenuItem.Header>
+                </MenuItem>
+                <Separator/>
+
+                <!-- CRT Snow -->
+                <MenuItem x:Name="CrtSnowMenuItem"
+                          Header="CRT Snow"
+                          IsCheckable="True"
+                          IsChecked="False"
+                          StaysOpenOnClick="True"
+                          Click="CrtSnow_Click"/>
+                <MenuItem StaysOpenOnClick="True">
+                    <MenuItem.Header>
+                        <StackPanel Width="200" Margin="0,2">
+                            <DockPanel LastChildFill="False">
+                                <TextBlock Text="Snow Strength" FontWeight="SemiBold"/>
+                                <TextBlock x:Name="SnowAmountValueText" Text="25%" DockPanel.Dock="Right" Foreground="#666666"/>
+                            </DockPanel>
+                            <Slider x:Name="SnowAmountSlider"
+                                    Minimum="0" Maximum="100" Value="25"
+                                    SmallChange="1" LargeChange="5"
+                                    TickFrequency="1" IsSnapToTickEnabled="True"
+                                    Margin="0,6,0,2"
+                                    PreviewMouseWheel="Slider_PreviewMouseWheel"
+                                    ValueChanged="SnowAmountSlider_ValueChanged"/>
+                        </StackPanel>
+                    </MenuItem.Header>
+                </MenuItem>
+            </MenuItem>
+            <Separator/>
+
+            <!-- Window Options -->
+            <MenuItem x:Name="AlwaysOnTopMenuItem" Header="Always on Top" IsCheckable="True" IsChecked="False" Click="AlwaysOnTop_Click"/>
+            <MenuItem x:Name="ShadowMenuItem" Header="Window Shadow" IsCheckable="True" IsChecked="True" Click="Shadow_Click"/>
+            <Separator/>
+
+            <!-- Instance Management -->
+            <MenuItem Header="New Terminal Window" Click="NewWindow_Click"/>
+            <MenuItem Header="Close Widget" Click="CloseWidget_Click"/>
+            <MenuItem Header="Exit All" Click="ExitAll_Click"/>
+        </ContextMenu>
+    </Window.ContextMenu>
+
+    <Grid Background="#01000000">
+        <!-- LAYER 1: Background Glass Panel & Drop Shadow -->
+        <Border x:Name="WindowBackgroundBorder"
+                Margin="14"
+                CornerRadius="8"
+                BorderThickness="1"
+                BorderBrush="#35FFFFFF"
+                Background="#F0080C14"
+                Opacity="0.75">
+            <Border.Effect>
+                <DropShadowEffect x:Name="WindowDropShadow"
+                                  BlurRadius="16"
+                                  ShadowDepth="4"
+                                  Direction="315"
+                                  Color="Black"
+                                  Opacity="0.35"
+                                  RenderingBias="Performance"/>
+            </Border.Effect>
+        </Border>
+
+        <!-- LAYER 2: Background Image Layer (Scaled UniformToFill with Rounded Corner Clipping) -->
+        <Border x:Name="BackgroundImageBorder"
+                Margin="14"
+                CornerRadius="8"
+                ClipToBounds="True"
+                Opacity="0.75"
+                IsHitTestVisible="False">
+            <Image x:Name="BackgroundImageElement"
+                   Stretch="UniformToFill"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   Visibility="Collapsed"
+                   RenderOptions.BitmapScalingMode="HighQuality"/>
+        </Border>
+
+        <!-- LAYER 3: Terminal Content Area (Header, Log Feed, Interactive Prompt) -->
+        <Grid x:Name="TerminalContentGrid" Margin="14" Opacity="1.0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/> <!-- Title / Draggable Header -->
+                <RowDefinition Height="*"/>    <!-- Scrollable Terminal Log Feed -->
+                <RowDefinition Height="Auto"/> <!-- Command Input Prompt Bar -->
+            </Grid.RowDefinitions>
+
+            <!-- Draggable Header Bar -->
+            <Border x:Name="HeaderBarBorder"
+                    Grid.Row="0"
+                    Background="Transparent"
+                    CornerRadius="7,7,0,0"
+                    Padding="10,6"
+                    MouseLeftButtonDown="Header_MouseLeftButtonDown">
+                <DockPanel LastChildFill="True">
+                    <!-- Right-side Quick Action Buttons -->
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button x:Name="ClearButton"
+                                Content="CLR"
+                                ToolTip="Clear screen"
+                                Style="{x:Null}"
+                                Background="Transparent"
+                                Foreground="#80FFFFFF"
+                                BorderThickness="0"
+                                Padding="6,2"
+                                FontSize="10"
+                                Cursor="Hand"
+                                Click="ClearTerminal_Click"/>
+                        <Button x:Name="BreakButton"
+                                Content="RST"
+                                ToolTip="Restart / Break shell"
+                                Style="{x:Null}"
+                                Background="Transparent"
+                                Foreground="#80FFFFFF"
+                                BorderThickness="0"
+                                Padding="6,2"
+                                FontSize="10"
+                                Cursor="Hand"
+                                Click="RestartShell_Click"/>
+                        <Button x:Name="CloseButton"
+                                Content="✕"
+                                ToolTip="Close widget"
+                                Style="{x:Null}"
+                                Background="Transparent"
+                                Foreground="#80FFFFFF"
+                                BorderThickness="0"
+                                Padding="6,2"
+                                FontSize="11"
+                                FontWeight="Bold"
+                                Cursor="Hand"
+                                Click="CloseWidget_Click"/>
+                    </StackPanel>
+
+                    <!-- Left-side Status / Shell Badge -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border x:Name="ShellBadgeBorder"
+                                Background="Transparent"
+                                BorderBrush="#6000FF66"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Padding="6,2"
+                                Margin="0,0,8,0">
+                            <TextBlock x:Name="ShellBadgeText"
+                                       Text="[ POWERSHELL ]"
+                                       FontSize="10"
+                                       FontWeight="Bold"
+                                       Foreground="#00FF66"/>
+                        </Border>
+                        <TextBlock x:Name="StatusText"
+                                   Text="Cyberpunk Terminal HUD • Right-click for options"
+                                   FontSize="11"
+                                   Foreground="#70FFFFFF"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <!-- Terminal Output Feed -->
+            <RichTextBox x:Name="TerminalOutputBox"
+                         Grid.Row="1"
+                         IsReadOnly="True"
+                         IsReadOnlyCaretVisible="False"
+                         Background="Transparent"
+                         Foreground="#00FF66"
+                         FontFamily="Cascadia Code, Consolas, Courier New"
+                         FontSize="12"
+                         BorderThickness="0"
+                         Padding="10,8"
+                         VerticalScrollBarVisibility="Auto"
+                         HorizontalScrollBarVisibility="Disabled"
+                         ScrollViewer.CanContentScroll="False"
+                         IsUndoEnabled="False"
+                         CaretBrush="#00FF66"
+                         PreviewTextInput="TerminalOutputBox_PreviewTextInput">
+                <RichTextBox.Resources>
+                    <Style TargetType="{x:Type Paragraph}">
+                        <Setter Property="Margin" Value="0,1"/>
+                        <Setter Property="LineHeight" Value="18"/>
+                    </Style>
+                    <SolidColorBrush x:Key="ScrollThumbBrush" Color="#6000FF66"/>
+                    <Style TargetType="{x:Type ScrollBar}">
+                        <Setter Property="Stylus.IsPressAndHoldEnabled" Value="false"/>
+                        <Setter Property="Stylus.IsFlicksEnabled" Value="false"/>
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Setter Property="BorderThickness" Value="0"/>
+                        <Setter Property="Width" Value="6"/>
+                        <Setter Property="MinWidth" Value="6"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="{x:Type ScrollBar}">
+                                    <Grid x:Name="Bg" Background="Transparent" SnapsToDevicePixels="true">
+                                        <!-- 2px Ultra-minimalist Track sharing window transparency -->
+                                        <Rectangle Width="2" HorizontalAlignment="Center" Fill="#12FFFFFF" RadiusX="1" RadiusY="1"/>
+                                        <Track x:Name="PART_Track" IsDirectionReversed="true">
+                                            <Track.DecreaseRepeatButton>
+                                                <RepeatButton Command="{x:Static ScrollBar.PageUpCommand}"
+                                                              Opacity="0"
+                                                              Focusable="false"
+                                                              Background="Transparent"
+                                                              BorderThickness="0">
+                                                    <RepeatButton.Template>
+                                                        <ControlTemplate TargetType="{x:Type RepeatButton}">
+                                                            <Rectangle Fill="Transparent"/>
+                                                        </ControlTemplate>
+                                                    </RepeatButton.Template>
+                                                </RepeatButton>
+                                            </Track.DecreaseRepeatButton>
+                                            <Track.IncreaseRepeatButton>
+                                                <RepeatButton Command="{x:Static ScrollBar.PageDownCommand}"
+                                                              Opacity="0"
+                                                              Focusable="false"
+                                                              Background="Transparent"
+                                                              BorderThickness="0">
+                                                    <RepeatButton.Template>
+                                                        <ControlTemplate TargetType="{x:Type RepeatButton}">
+                                                            <Rectangle Fill="Transparent"/>
+                                                        </ControlTemplate>
+                                                    </RepeatButton.Template>
+                                                </RepeatButton>
+                                            </Track.IncreaseRepeatButton>
+                                            <Track.Thumb>
+                                                <Thumb Style="{x:Null}">
+                                                    <Thumb.Template>
+                                                        <ControlTemplate TargetType="{x:Type Thumb}">
+                                                            <!-- 3px Minimalist Position Indicator -->
+                                                            <Border x:Name="ThumbBorder"
+                                                                    Background="{DynamicResource ScrollThumbBrush}"
+                                                                    CornerRadius="1.5"
+                                                                    Width="3"
+                                                                    HorizontalAlignment="Center"/>
+                                                            <ControlTemplate.Triggers>
+                                                                <Trigger Property="IsMouseOver" Value="true">
+                                                                    <Setter TargetName="ThumbBorder" Property="Width" Value="4"/>
+                                                                    <Setter TargetName="ThumbBorder" Property="Opacity" Value="0.9"/>
+                                                                </Trigger>
+                                                                <Trigger Property="IsDragging" Value="true">
+                                                                    <Setter TargetName="ThumbBorder" Property="Width" Value="4"/>
+                                                                    <Setter TargetName="ThumbBorder" Property="Opacity" Value="1.0"/>
+                                                                </Trigger>
+                                                            </ControlTemplate.Triggers>
+                                                        </ControlTemplate>
+                                                    </Thumb.Template>
+                                                </Thumb>
+                                            </Track.Thumb>
+                                        </Track>
+                                    </Grid>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </RichTextBox.Resources>
+                <FlowDocument x:Name="TerminalFlowDocument" PagePadding="0"/>
+            </RichTextBox>
+
+            <!-- Command Input Prompt Bar -->
+            <Border x:Name="PromptBarBorder"
+                    Grid.Row="2"
+                    Background="#18000000"
+                    BorderThickness="0,1,0,0"
+                    BorderBrush="#25FFFFFF"
+                    CornerRadius="0,0,7,7"
+                    Padding="10,6">
+                <DockPanel LastChildFill="True">
+                    <TextBlock x:Name="PromptPrefixTextBlock"
+                               Text="PS &gt; "
+                               Foreground="#00FF66"
+                               FontFamily="Cascadia Code, Consolas, Courier New"
+                               FontSize="12"
+                               FontWeight="Bold"
+                               VerticalAlignment="Center"
+                               Margin="0,0,4,0"/>
+                    <TextBox x:Name="InputTextBox"
+                             Background="Transparent"
+                             Foreground="#00FF66"
+                             FontFamily="Cascadia Code, Consolas, Courier New"
+                             FontSize="12"
+                             BorderThickness="0"
+                             CaretBrush="#00FF66"
+                             VerticalAlignment="Center"
+                             PreviewKeyDown="InputTextBox_PreviewKeyDown"/>
+                </DockPanel>
+            </Border>
+
+            <!-- Jitter Transform for CRT Glitch FX -->
+            <Grid.RenderTransform>
+                <TranslateTransform x:Name="ContentJitterTransform" X="0" Y="0"/>
+            </Grid.RenderTransform>
+        </Grid>
+
+        <!-- LAYER 4: Retro CRT Overlays (Scanlines, Snow Static, Glitch Slices) -->
+        <Grid x:Name="CrtOverlayGrid" Margin="14" IsHitTestVisible="False">
+            <!-- CRT Snow Static Overlay -->
+            <Image x:Name="CrtSnowOverlay"
+                   Stretch="Fill"
+                   Visibility="Collapsed"
+                   Opacity="0.0"
+                   IsHitTestVisible="False"
+                   RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+
+            <!-- Vintage Scanlines -->
+            <Rectangle x:Name="CrtScanlinesOverlay"
+                       Visibility="Collapsed"
+                       Opacity="0.85"
+                       IsHitTestVisible="False">
+                <Rectangle.Fill>
+                    <DrawingBrush x:Name="CrtDrawingBrush" TileMode="Tile" Viewport="0,0,1,6" ViewportUnits="Absolute">
+                        <DrawingBrush.Drawing>
+                            <DrawingGroup>
+                                <GeometryDrawing Brush="#00000000">
+                                    <GeometryDrawing.Geometry>
+                                        <RectangleGeometry Rect="0,0,1,6"/>
+                                    </GeometryDrawing.Geometry>
+                                </GeometryDrawing>
+                                <GeometryDrawing Brush="#F0000000">
+                                    <GeometryDrawing.Geometry>
+                                        <RectangleGeometry Rect="0,0,1,3"/>
+                                    </GeometryDrawing.Geometry>
+                                </GeometryDrawing>
+                            </DrawingGroup>
+                        </DrawingBrush.Drawing>
+                    </DrawingBrush>
+                </Rectangle.Fill>
+            </Rectangle>
+
+            <!-- CRT Glitch Bars & Chromatic Tears Canvas -->
+            <Canvas x:Name="CrtGlitchCanvas"
+                    Visibility="Collapsed"
+                    IsHitTestVisible="False"
+                    ClipToBounds="True"/>
+        </Grid>
+
+        <!-- LAYER 5: Cyberpunk Rainbow Border around the window -->
+        <Border x:Name="CyberpunkRainbowBorder"
+                Margin="6"
+                CornerRadius="8"
+                BorderThickness="0"
+                Visibility="Collapsed"
+                IsHitTestVisible="False">
+            <Border.BorderBrush>
+                <LinearGradientBrush x:Name="RainbowGradientBrush" StartPoint="0,0" EndPoint="1,1">
+                    <LinearGradientBrush.RelativeTransform>
+                        <RotateTransform x:Name="RainbowRotateTransform" CenterX="0.5" CenterY="0.5" Angle="0"/>
+                    </LinearGradientBrush.RelativeTransform>
+                    <GradientStop Color="#FF0055" Offset="0.0"/>
+                    <GradientStop Color="#FF7700" Offset="0.16"/>
+                    <GradientStop Color="#FFE600" Offset="0.33"/>
+                    <GradientStop Color="#00FF66" Offset="0.50"/>
+                    <GradientStop Color="#00F0FF" Offset="0.67"/>
+                    <GradientStop Color="#7000FF" Offset="0.83"/>
+                    <GradientStop Color="#FF007F" Offset="1.0"/>
+                </LinearGradientBrush>
+            </Border.BorderBrush>
+            <Border.Effect>
+                <DropShadowEffect x:Name="RainbowGlowEffect"
+                                  BlurRadius="12"
+                                  ShadowDepth="0"
+                                  Color="#00F0FF"
+                                  Opacity="0.8"
+                                  RenderingBias="Performance"/>
+            </Border.Effect>
+        </Border>
+
+        <!-- LAYER 6: Resize Grip -->
+        <ResizeGrip HorizontalAlignment="Right"
+                    VerticalAlignment="Bottom"
+                    Margin="0,0,16,16"
+                    Opacity="0.4"
+                    Cursor="SizeNWSE"/>
+    </Grid>
+</Window>

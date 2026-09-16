@@ -1,0 +1,179 @@
+<Window x:Class="CyberpunkTerminalWidget.FontPickerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Choose Font"
+        Width="540" Height="480"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResizeWithGrip"
+        Background="#181B26"
+        Foreground="White"
+        WindowStyle="None"
+        AllowsTransparency="True">
+
+    <Window.Resources>
+        <Style TargetType="ScrollBar">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+    </Window.Resources>
+
+    <Border Background="#1C2030"
+            BorderBrush="#4000F0FF"
+            BorderThickness="1"
+            CornerRadius="8"
+            Padding="16">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="20" ShadowDepth="4" Direction="315" Color="Black" Opacity="0.6"/>
+        </Border.Effect>
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/> <!-- Title / Drag Header -->
+                <RowDefinition Height="Auto"/> <!-- Search Box -->
+                <RowDefinition Height="*"/>    <!-- Font & Size Lists -->
+                <RowDefinition Height="Auto"/> <!-- Live Sample Preview -->
+                <RowDefinition Height="Auto"/> <!-- Buttons -->
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <DockPanel Grid.Row="0" Margin="0,0,0,12" MouseLeftButtonDown="Header_MouseLeftButtonDown">
+                <Button DockPanel.Dock="Right"
+                        Content="✕"
+                        Background="Transparent"
+                        Foreground="#A0FFFFFF"
+                        BorderThickness="0"
+                        FontSize="14"
+                        FontWeight="Bold"
+                        Cursor="Hand"
+                        Click="Cancel_Click"/>
+                <TextBlock Text="SYSTEM FONT PICKER"
+                           FontWeight="Bold"
+                           FontSize="14"
+                           Foreground="#00F0FF"
+                           VerticalAlignment="Center"/>
+            </DockPanel>
+
+            <!-- Search / Filter -->
+            <Border Grid.Row="1"
+                    Background="#121520"
+                    BorderBrush="#30FFFFFF"
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    Padding="6,4"
+                    Margin="0,0,0,10">
+                <DockPanel LastChildFill="True">
+                    <TextBlock Text="🔍 "
+                               Foreground="#80FFFFFF"
+                               VerticalAlignment="Center"
+                               Margin="2,0,4,0"/>
+                    <TextBox x:Name="SearchBox"
+                             Background="Transparent"
+                             Foreground="White"
+                             BorderThickness="0"
+                             FontSize="12"
+                             CaretBrush="#00F0FF"
+                             TextChanged="SearchBox_TextChanged"/>
+                </DockPanel>
+            </Border>
+
+            <!-- Font List & Size Selection -->
+            <Grid Grid.Row="2" Margin="0,0,0,12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="100"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Font Family List -->
+                <Border Grid.Column="0"
+                        Background="#121520"
+                        BorderBrush="#30FFFFFF"
+                        BorderThickness="1"
+                        CornerRadius="4"
+                        Margin="0,0,8,0">
+                    <ListBox x:Name="FontListBox"
+                             Background="Transparent"
+                             Foreground="White"
+                             BorderThickness="0"
+                             SelectionMode="Single"
+                             SelectionChanged="FontListBox_SelectionChanged">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Source}"
+                                           FontFamily="{Binding}"
+                                           FontSize="13"
+                                           Padding="4,2"/>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Border>
+
+                <!-- Font Size List -->
+                <Border Grid.Column="1"
+                        Background="#121520"
+                        BorderBrush="#30FFFFFF"
+                        BorderThickness="1"
+                        CornerRadius="4">
+                    <ListBox x:Name="SizeListBox"
+                             Background="Transparent"
+                             Foreground="White"
+                             BorderThickness="0"
+                             SelectionMode="Single"
+                             SelectionChanged="SizeListBox_SelectionChanged">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}"
+                                           FontSize="12"
+                                           Padding="6,2"
+                                           HorizontalAlignment="Center"/>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Border>
+            </Grid>
+
+            <!-- Live Sample Preview -->
+            <Border Grid.Row="3"
+                    Background="#0D1017"
+                    BorderBrush="#30FFFFFF"
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    Padding="12"
+                    Margin="0,0,0,14"
+                    MinHeight="70">
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="PREVIEW"
+                               FontSize="10"
+                               FontWeight="Bold"
+                               Foreground="#60FFFFFF"
+                               Margin="0,0,0,4"/>
+                    <TextBlock x:Name="PreviewTextBlock"
+                               Text="The quick brown fox jumps over the lazy dog! 0123456789"
+                               Foreground="#00FF66"
+                               FontSize="13"
+                               TextWrapping="Wrap"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Buttons -->
+            <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Cancel"
+                        Width="85" Height="28"
+                        Background="#252A3D"
+                        Foreground="#C0FFFFFF"
+                        BorderThickness="1"
+                        BorderBrush="#40FFFFFF"
+                        Margin="0,0,8,0"
+                        Cursor="Hand"
+                        Click="Cancel_Click"/>
+                <Button Content="Apply Font"
+                        Width="95" Height="28"
+                        Background="#00F0FF"
+                        Foreground="Black"
+                        FontWeight="Bold"
+                        BorderThickness="0"
+                        Cursor="Hand"
+                        Click="Apply_Click"/>
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>
+

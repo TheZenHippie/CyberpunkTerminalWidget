@@ -1,0 +1,121 @@
+name: Build and Publish Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release Tag Name (e.g. v1.0.0)'
+        required: false
+        default: 'v1.0.0'
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    name: Build & Package Windows Releases
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET 8 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Determine Version
+        id: get_version
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          if ("${{ github.event_name }}" -eq "workflow_dispatch" -and "${{ github.event.inputs.tag_name }}") {
+            $tag = "${{ github.event.inputs.tag_name }}"
+          }
+          if (-not $tag -or $tag -notmatch '^v\d+') {
+            $tag = "v1.0.0"
+          }
+          $rawVersion = $tag.TrimStart('v')
+          Write-Host "Publishing Version: $tag (AssemblyVersion: $rawVersion)"
+          "TAG_NAME=$tag" >> $env:GITHUB_ENV
+          "RAW_VERSION=$rawVersion" >> $env:GITHUB_ENV
+
+      - name: Restore Dependencies
+        run: dotnet restore CyberpunkTerminalWidget.csproj
+
+      - name: Publish Standalone (Self-Contained win-x64)
+        run: >
+          dotnet publish CyberpunkTerminalWidget.csproj
+          -c Release
+          -r win-x64
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:EnableCompressionInSingleFile=true
+          -p:Version=${{ env.RAW_VERSION }}
+          -p:AssemblyVersion=${{ env.RAW_VERSION }}.0
+          -p:FileVersion=${{ env.RAW_VERSION }}.0
+          -o ./publish/standalone
+
+      - name: Publish Framework-Dependent (win-x64)
+        run: >
+          dotnet publish CyberpunkTerminalWidget.csproj
+          -c Release
+          -r win-x64
+          --self-contained false
+          -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:Version=${{ env.RAW_VERSION }}
+          -p:AssemblyVersion=${{ env.RAW_VERSION }}.0
+          -p:FileVersion=${{ env.RAW_VERSION }}.0
+          -o ./publish/framework-dependent
+
+      - name: Create Release Zip Packages & Checksums
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path ./release
+
+          # Copy documentation and icon to packaging dirs
+          Copy-Item -Path "README.md", "LICENSE", "icon.png" -Destination "./publish/standalone/" -ErrorAction SilentlyContinue
+          Copy-Item -Path "README.md", "LICENSE", "icon.png" -Destination "./publish/framework-dependent/" -ErrorAction SilentlyContinue
+
+          # Archive Standalone
+          $standaloneZip = "./release/CyberpunkTerminalWidget-$($env:TAG_NAME)-win-x64-Standalone.zip"
+          Compress-Archive -Path "./publish/standalone/*" -DestinationPath $standaloneZip -Force
+
+          # Archive Framework-Dependent
+          $frameworkDepZip = "./release/CyberpunkTerminalWidget-$($env:TAG_NAME)-win-x64-FrameworkDependent.zip"
+          Compress-Archive -Path "./publish/framework-dependent/*" -DestinationPath $frameworkDepZip -Force
+
+          # Copy standalone exe
+          Copy-Item -Path "./publish/standalone/CyberpunkTerminalWidget.exe" -Destination "./release/CyberpunkTerminalWidget.exe" -Force
+
+          # Generate SHA256 Checksums
+          $checksumFile = "./release/SHA256SUMS.txt"
+          Get-ChildItem -Path ./release/*.zip, ./release/*.exe | ForEach-Object {
+            $hash = (Get-FileHash -Path $_.FullName -Algorithm SHA256).Hash.ToLower()
+            "$hash  $($_.Name)" | Out-File -FilePath $checksumFile -Append -Encoding ascii
+          }
+
+          Get-Content $checksumFile
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+        with:
+          tag_name: ${{ env.TAG_NAME }}
+          name: "Cyberpunk Terminal Widget ${{ env.TAG_NAME }}"
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            ./release/*.zip
+            ./release/*.exe
+            ./release/SHA256SUMS.txt
+
